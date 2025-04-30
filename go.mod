@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/cert-manager/cert-manager v1.15.1
-	github.com/fl0eb/go-strato v0.0.2
+	github.com/fl0eb/go-strato v0.0.3
 	k8s.io/apiextensions-apiserver v0.30.2
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
