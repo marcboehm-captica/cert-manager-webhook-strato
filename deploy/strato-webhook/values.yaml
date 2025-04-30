@@ -13,9 +13,11 @@ certManager:
   serviceAccountName: cert-manager
 
 image:
-  repository: ghcr.io/fl0eb/cert-manager-webhoook-strato
+  repository: ghcr.io/fl0eb/cert-manager-webhook-strato
   tag: latest
   pullPolicy: IfNotPresent
+
+imagePullSecret: []
 
 nameOverride: ""
 fullnameOverride: ""
@@ -23,6 +25,15 @@ fullnameOverride: ""
 service:
   type: ClusterIP
   port: 443
+
+credentials:
+  # If you want to use an existing secret, set the name here. 
+  # The secret must contain the fields `identity` and `password`.
+  # It also needs to be in the same namespace as the webhook.
+  # Otherwise, the webhook will be created with the values below.
+  existingSecretName: ""
+  identity: ""
+  password: ""
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

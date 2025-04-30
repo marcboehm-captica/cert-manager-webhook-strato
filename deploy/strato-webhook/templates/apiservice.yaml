@@ -3,8 +3,8 @@ kind: APIService
 metadata:
   name: v1alpha1.{{ .Values.groupName }}
   labels:
-    app: {{ include "example-webhook.name" . }}
-    chart: {{ include "example-webhook.chart" . }}
+    app: {{ include "strato-webhook.name" . }}
+    chart: {{ include "strato-webhook.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
@@ -14,6 +14,6 @@ spec:
   groupPriorityMinimum: 1000
   versionPriority: 15
   service:
-    name: {{ include "example-webhook.fullname" . }}
+    name: {{ include "strato-webhook.fullname" . }}
     namespace: {{ .Release.Namespace }}
   version: v1alpha1
