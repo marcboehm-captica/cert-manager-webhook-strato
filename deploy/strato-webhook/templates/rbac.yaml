@@ -89,3 +89,44 @@ subjects:
     kind: ServiceAccount
     name: {{ .Values.certManager.serviceAccountName }}
     namespace: {{ .Values.certManager.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "strato-webhook.fullname" . }}:secret-reader
+  namespace: {{ .Values.certManager.namespace }}
+  labels:
+    app: {{ include "strato-webhook.name" . }}
+    chart: {{ include "strato-webhook.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - 'secrets'
+    resourceNames: {{ .Values.secretsNames }}
+    verbs:
+      - 'get'
+      - 'watch'
+      - 'list'
+# Allow strato-webhook ServiceAccount to read its secrets
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "strato-webhook.fullname" . }}:secret-reader
+  namespace: {{ .Values.certManager.namespace }}
+  labels:
+    app: {{ include "strato-webhook.name" . }}
+    chart: {{ include "strato-webhook.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "strato-webhook.fullname" . }}:secret-reader
+subjects:
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: {{ include "strato-webhook.fullname" . }}
+    namespace: {{ .Release.Namespace }}
