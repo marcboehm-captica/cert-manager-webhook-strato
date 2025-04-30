@@ -1,16 +1,19 @@
 package main
 
 import (
+	"log"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	acmetest "github.com/cert-manager/cert-manager/test/acme"
-
-	"github.com/cert-manager/webhook-example/example"
+	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 var (
 	zone = os.Getenv("TEST_ZONE_NAME")
+	fqdn string
 )
 
 func TestRunsSuite(t *testing.T) {
@@ -19,23 +22,39 @@ func TestRunsSuite(t *testing.T) {
 	// ChallengeRequest passed as part of the test cases.
 	//
 
-	// Uncomment the below fixture when implementing your custom DNS provider
-	//fixture := acmetest.NewFixture(&customDNSProviderSolver{},
-	//	acmetest.SetResolvedZone(zone),
-	//	acmetest.SetAllowAmbientCredentials(false),
-	//	acmetest.SetManifestPath("testdata/my-custom-solver"),
-	//	acmetest.SetBinariesPath("_test/kubebuilder/bin"),
-	//)
-	solver := example.New("59351")
-	fixture := acmetest.NewFixture(solver,
-		acmetest.SetResolvedZone("example.com."),
-		acmetest.SetManifestPath("testdata/my-custom-solver"),
-		acmetest.SetDNSServer("127.0.0.1:59351"),
-		acmetest.SetUseAuthoritative(false),
-	)
-	//need to uncomment and  RunConformance delete runBasic and runExtended once https://github.com/cert-manager/cert-manager/pull/4835 is merged
-	//fixture.RunConformance(t)
-	fixture.RunBasic(t)
-	fixture.RunExtended(t)
+	fqdn = GetRandomString(20) + "." + zone
 
+	// Since the framework does not load the secret yaml, we use the workaround from
+	d, err := os.ReadFile("testdata/config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	duration, err := time.ParseDuration("5m")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fixture := acmetest.NewFixture(&stratoDNSProviderSolver{},
+		acmetest.SetResolvedZone(zone),
+		acmetest.SetResolvedFQDN(fqdn),
+		acmetest.SetStrict(true),
+		acmetest.SetPropagationLimit(duration),
+		acmetest.SetManifestPath("testdata/strato-secret.yaml"),
+		acmetest.SetConfig(&extapi.JSON{
+			Raw: d,
+		}),
+	)
+	fixture.RunConformance(t)
+
+}
+
+func GetRandomString(n int) string {
+	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
