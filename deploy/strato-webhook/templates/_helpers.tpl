@@ -46,7 +46,3 @@ Create chart name and version as used by the chart label.
 {{- define "strato-webhook.servingCertificate" -}}
 {{ printf "%s-webhook-tls" (include "strato-webhook.fullname" .) }}
 {{- end -}}
-
-{{- define "strato-webhook.secretName" -}}
-{{- default (include "strato-webhook.fullname" .) (.Values.token.existingSecretName) -}}
-{{- end -}}
