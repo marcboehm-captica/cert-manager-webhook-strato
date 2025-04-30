@@ -105,8 +105,8 @@ rules:
   - apiGroups: [""]
     resources:
       - 'secrets'
-    {{- if .Values.secretsNames }}
-    resourceNames: {{ .Values.secretsNames }}
+    {{- if .Values.secretNames }}
+    resourceNames: {{ .Values.secretNames }}
     {{- end }}
     verbs:
       - 'get'

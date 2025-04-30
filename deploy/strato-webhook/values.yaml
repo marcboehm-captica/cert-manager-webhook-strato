@@ -17,14 +17,19 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
-imagePullSecret: []
+imagePullSecrets: []
 
 nameOverride: ""
 fullnameOverride: ""
 
-# The names for the secrets that the webhook will have access to.
-# If you comment out this line, the webhook will have access to all secrets in the namespace.
-secretsNames: []
+# By default the webhook will have access to all secrets in the namespace
+# Set it to `[""]` to disallow general access.
+#secretNames: [""]
+
+# Set it to specific secrets to allow access to only those secrets.
+#secretNames: 
+#  - "my-certissuer-secret"
+
 
 service:
   type: ClusterIP
