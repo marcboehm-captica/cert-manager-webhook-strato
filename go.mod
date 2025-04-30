@@ -1,6 +1,6 @@
 module github.com/fl0eb/cert-manager-webhook-strato
 
-go 1.24.2
+go 1.22.0
 
 require (
 	github.com/cert-manager/cert-manager v1.15.1
