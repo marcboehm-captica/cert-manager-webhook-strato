@@ -75,6 +75,7 @@ type stratoDNSProviderConfig struct {
 	//Email           string `json:"email"`
 	//APIKeySecretRef v1alpha1.SecretKeySelector `json:"apiKeySecretRef"`
 	SecretRef string `json:"secretName"`
+	API       string `json:"api"`
 	Domain    string `json:"domain"`
 	Order     string `json:"order"`
 }
@@ -227,7 +228,7 @@ func processRecord(c *stratoDNSProviderSolver, ch *v1alpha1.ChallengeRequest, ad
 	}
 
 	klog.V(6).Infof("Initializing Strato client for Order: %s and Domain: %s", cfg.Order, cfg.Domain)
-	client, err := strato.NewStratoClient(secretCfg.Identity, secretCfg.Password, cfg.Order, cfg.Domain)
+	client, err := strato.NewStratoClient(cfg.API, secretCfg.Identity, secretCfg.Password, cfg.Order, cfg.Domain)
 	if err != nil {
 		return err
 	}

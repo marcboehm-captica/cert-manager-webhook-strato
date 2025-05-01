@@ -115,6 +115,8 @@ Follow these steps to quickly set up and use the STRATO cert-manager webhook:
              solverName: strato
              config:
                secretName: strato-dns-credentials
+               # You should be able to change this to other regions if required (.nl .fr .es ...)
+               api: "https://www.strato.de/apps/CustomerService" 
                # For the following values you can check:
                # Strato Service Portal > Ihre Pakete > Paketübersicht
                domain: "example.com"   # The root domain (Kennung) this issuer will modify
