@@ -30,7 +30,8 @@ Follow these steps to quickly set up and use the STRATO cert-manager webhook:
 
 1. Add the Helm repository:
    ```bash
-   helm repo add strato-webhook https://fl0eb.github.io/cert-manager-webhook-strato
+   helm plugin install https://github.com/aslafy-z/helm-git --version 1.3.0
+   helm repo add strato-webhook git+https://github.com/fl0eb/cert-manager-webhook-strato@deploy/strato-webhook
    helm repo update
    ```
 
