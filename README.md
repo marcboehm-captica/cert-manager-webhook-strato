@@ -1,58 +1,162 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/cert-manager/cert-manager/d53c0b9270f8cd90d908460d69502694e1838f5f/logo/logo-small.png" height="256" width="256" alt="cert-manager project logo" />
+  <img src="https://www.strato.de/_assets/img/png/strato_ag_thumb.png" height="256" alt="strato project logo" />
 </p>
 
-# ACME webhook example
+# Strato ACME webhook
 
-The ACME issuer type supports an optional 'webhook' solver, which can be used
-to implement custom DNS01 challenge solving logic.
+This inofficial repository contains a cert-manager webhook implementation for the DNS provider STRATO. It enables cert-manager to solve DNS01 ACME challenges using STRATO's DNS services. By integrating with STRATO's API, this webhook allows users to automate the issuance and renewal of TLS certificates for domains managed by STRATO.
 
-This is useful if you need to use cert-manager with a DNS provider that is not
-officially supported in cert-manager core.
+The webhook is designed to be deployed as a Kubernetes API service, ensuring secure and restricted access through Kubernetes RBAC. It adheres to cert-manager's webhook interface, making it easy to integrate with existing cert-manager installations.
 
-## Why not in core?
+This implementation includes conformance tests to validate its functionality and ensure compatibility with cert-manager's DNS01 challenge requirements.
 
-As the project & adoption has grown, there has been an influx of DNS provider
-pull requests to our core codebase. As this number has grown, the test matrix
-has become un-maintainable and so, it's not possible for us to certify that
-providers work to a sufficient level.
+## Quickstart Guide
 
-By creating this 'interface' between cert-manager and DNS providers, we allow
-users to quickly iterate and test out new integrations, and then packaging
-those up themselves as 'extensions' to cert-manager.
+Follow these steps to quickly set up and use the STRATO cert-manager webhook:
 
-We can also then provide a standardised 'testing framework', or set of
-conformance tests, which allow us to validate that a DNS provider works as
-expected.
+### Prerequisites
 
-## Creating your own webhook
+1. A Kubernetes cluster with cert-manager installed.
+2. A Strato account and a domain.
+3. It is recommended to keep a backup of your DNS configuration as a precaution.
+4. Note: Two-factor authentication is not supported for this integration.
+   If this is a feature you would like to see, please open a issue
+5. `kubectl` or `helm` installed and configured to access your cluster.
 
-Webhook's themselves are deployed as Kubernetes API services, in order to allow
-administrators to restrict access to webhooks with Kubernetes RBAC.
+### Installation
 
-This is important, as otherwise it'd be possible for anyone with access to your
-webhook to complete ACME challenge validations and obtain certificates.
+#### Using Helm
 
-To make the set up of these webhook's easier, we provide a template repository
-that can be used to get started quickly.
+1. Add the Helm repository:
+   ```bash
+   helm repo add strato-webhook https://fl0eb.github.io/cert-manager-webhook-strato
+   helm repo update
+   ```
 
-### Creating your own repository
+3. Create a `values.yaml` file to customize the installation:
+   ```yaml
+   certManager:
+     namespace: <cert-manager namespace>
+     serviceAccountName: <cert-manager serviceAccountName>
+   ```
+   If cert-manager is installed with default values seen below you do not need to provide a values.yaml
+   ```yaml
+   certManager:
+     namespace: cert-manager
+     serviceAccountName: cert-manager
+   ```
 
-### Running the test suite
+4. Install the webhook using Helm:
+   ```bash
+   helm install strato-webhook strato-webhook/cert-manager-webhook-strato --namespace cert-manager -f values.yaml
+   ```
 
-All DNS providers **must** run the DNS01 provider conformance testing suite,
-else they will have undetermined behaviour when used with cert-manager.
+5. Verify the webhook is running:
+   ```bash
+   kubectl get pods -n cert-manager
+   ```
 
-**It is essential that you configure and run the test suite when creating a
-DNS01 webhook.**
+#### Using kubectl
 
-An example Go test file has been provided in [main_test.go](https://github.com/cert-manager/webhook-example/blob/master/main_test.go).
+1. Deploy the webhook to your Kubernetes cluster:
+   ```bash
+   kubectl apply -f https://github.com/fl0eb/cert-manager-webhook-strato/releases/download/v0.0.1/rendered-manifest.yaml
+   ```
 
-You can run the test suite with:
+2. Verify the webhook is running:
+   ```bash
+   kubectl get pods -n cert-manager
+   ```
 
-```bash
-$ TEST_ZONE_NAME=example.com. make test
-```
+### Configuration
 
-The example file has a number of areas you must fill in and replace with your
-own options in order for tests to pass.
+1. Create a Kubernetes Secret with your STRATO API credentials:
+   ```yaml
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: strato-dns-credentials
+     namespace: cert-manager
+   type: Opaque
+   data:
+     identity: <base64-encoded-identity>
+     password: <base64-encoded-password>
+   ```
+   Apply the secret:
+   ```bash
+   kubectl apply -f strato-dns-credentials.yaml
+   ```
+   Alternatively, you can create the secret directly from literals using `kubectl`:
+
+   ```bash
+   kubectl create secret generic strato-dns-credentials \
+     --namespace cert-manager \
+     --from-literal=identity=<your-identity> \
+     --from-literal=password=<your-password>
+   ```
+
+2. Configure an Issuer or ClusterIssuer to use the webhook:
+   ```yaml
+   apiVersion: cert-manager.io/v1
+   kind: ClusterIssuer
+   metadata:
+     name: strato-issuer
+   spec:
+     acme:
+       server: https://acme-v02.api.letsencrypt.org/directory
+       email: your-email@example.com
+       privateKeySecretRef:
+         name: strato-issuer-account-key
+       solvers:
+       - dns01:
+           webhook:
+             groupName: fl0eb.github.com
+             solverName: strato
+             config:
+               secretName: strato-dns-credentials
+               # For the following values you can check:
+               # Strato Service Portal > Ihre Pakete > Paketübersicht
+               domain: "example.com"   # The root domain (Kennung) this issuer will modify
+               order: "1234567"      # The package order id (Auftragsnummer) the domain belongs to
+   ```
+   Apply the issuer:
+   ```bash
+   kubectl apply -f strato-issuer.yaml
+   ```
+
+### Requesting a Certificate
+
+1. Create a Certificate resource:
+   ```yaml
+   apiVersion: cert-manager.io/v1
+   kind: Certificate
+   metadata:
+     name: example-com-tls
+     namespace: default
+   spec:
+     secretName: example-com-tls
+     issuerRef:
+       name: strato-issuer
+       kind: ClusterIssuer
+     commonName: example.com
+     dnsNames:
+     - "*.example.com"
+   ```
+   Apply the certificate:
+   ```bash
+   kubectl apply -f certificate.yaml
+   ```
+
+2. Verify the certificate is issued:
+   ```bash
+   kubectl describe certificate example-com-tls
+   ```
+
+## Special Thanks
+
+This project was inspired by the following repositories:
+
+- [strato-certbot](https://github.com/Buxdehuda/strato-certbot)
+- [cert-manager-webhook-infomaniak](https://github.com/Infomaniak/cert-manager-webhook-infomaniak)
+
