@@ -193,7 +193,7 @@ func prevalidate(cfg stratoDNSProviderConfig, ch *v1alpha1.ChallengeRequest) err
 		return fmt.Errorf("resolved FQDN or resolved zone is empty")
 	}
 
-	if ch.ResolvedZone != cfg.Domain+"." || !strings.HasSuffix(ch.ResolvedZone, cfg.Domain+".") {
+	if ch.ResolvedZone != cfg.Domain+"." && !strings.HasSuffix(ch.ResolvedZone, cfg.Domain+".") {
 		return fmt.Errorf("resolved zone '%s' does not match configured domain '%s'", ch.ResolvedZone, cfg.Domain)
 	}
 
