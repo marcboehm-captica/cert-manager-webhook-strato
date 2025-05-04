@@ -189,12 +189,12 @@ func contains(records []strato.DNSRecord, record strato.DNSRecord) bool {
 }
 
 func prevalidate(cfg stratoDNSProviderConfig, ch *v1alpha1.ChallengeRequest) error {
-	if ch.ResolvedZone != cfg.Domain+"." {
-		return fmt.Errorf("resolved zone '%s' does not match configured domain '%s'", ch.ResolvedZone, cfg.Domain)
-	}
-
 	if ch.ResolvedFQDN == "" || ch.ResolvedZone == "" {
 		return fmt.Errorf("resolved FQDN or resolved zone is empty")
+	}
+
+	if ch.ResolvedZone != cfg.Domain+"." || !strings.HasSuffix(ch.ResolvedZone, cfg.Domain+".") {
+		return fmt.Errorf("resolved zone '%s' does not match configured domain '%s'", ch.ResolvedZone, cfg.Domain)
 	}
 
 	if !strings.HasSuffix(ch.ResolvedFQDN, "."+ch.ResolvedZone) {
@@ -223,7 +223,7 @@ func processRecord(c *stratoDNSProviderSolver, ch *v1alpha1.ChallengeRequest, ad
 
 	record := strato.DNSRecord{
 		Type:   "TXT",
-		Prefix: strings.ToLower(strings.TrimSuffix(ch.ResolvedFQDN, "."+ch.ResolvedZone)),
+		Prefix: strings.ToLower(strings.TrimSuffix(ch.ResolvedFQDN, "."+cfg.Domain+".")),
 		Value:  ch.Key,
 	}
 
