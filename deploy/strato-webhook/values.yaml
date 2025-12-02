@@ -6,14 +6,14 @@
 # solve the DNS01 challenge.
 # This group name should be **unique**, hence using your own company's domain
 # here is recommended.
-groupName: fl0eb.github.com
+groupName: marcboehm-captica.github.com
 
 certManager:
   namespace: cert-manager
   serviceAccountName: cert-manager
 
 image:
-  repository: ghcr.io/fl0eb/cert-manager-webhook-strato
+  repository: ghcr.io/marcboehm-captica/cert-manager-webhook-strato
   tag: latest
   pullPolicy: IfNotPresent
 
