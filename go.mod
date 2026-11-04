@@ -110,4 +110,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/fl0eb/go-strato => github.com/marcboehm-captica/go-strato v0.0.6
+replace github.com/fl0eb/go-strato => github.com/marcboehm-captica/go-strato v0.0.7
